@@ -1,192 +1,178 @@
-# Dillinger
-## _The Last Markdown Editor, Ever_
+## Playwright Documentation
+Playwright is a node.js library for Web Testing and Automation.
+It allows testing Chromium, Firefox, and WebKit with a single API. Playwright is built to enable cross-browser web automation that is ever-green, capable, reliable, and fast.
+It does everything you would expect from the regular test runner.
 
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
+### 1. Important Features
+•	Auto Wait: Waits automatically for controls to be available
+•	Scenarios: that span multiple pages, frames, and domain
+•	Intercept: Network activity and stubbing, tracing (Check and monitor user behavior on the website)
+•	Create an up-to-date, automated testing environment. Run test on the latest version.
+•	Emulate: Mobile device, geolocation, and permission
+•	Native: Test recorder, Test Runner, Video Capture capability
+### 2. Language Binding
+The Playwright API is available in multiple languages.
+•	JavaScript and TypeScript
+•	Python
+•	Java
+•	.NET
+### 3. Installation
+Playwright has its own test runner for end-to-end tests, we call it Playwright Test. Playwright is popular for its quick installation.
+#### 3.1. Using init command
+The easiest way to get started with Playwright Test is to run the init command.
+This will create a configuration file, optionally add examples, a GitHub Action workflow, and a first test example.spec.ts. You can now jump directly to writing assertions section.
+# Run from your project's root directory
+npm init playwright
+# Or create a new project
+npm init playwright <new-project>
+#### 3.2. Manually
+Add dependency and install browsers.
+npm i -D @playwright/test
+# install supported browsers
+npx playwright install
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
+You can optionally install only selected browsers, see install browsers for more details. Or you can install no browsers at all and use existing browser channels.
+### 4. Requirements
+•	NodeJS
+•	Visual Studio Code
+### 5. Writing Playwright Script
+Create tests/sample.spec.js to define your test under the Test folder.
+Below test represent multiple things like : 'test' is for Test instance can be used, 'expect' is for Expect is used to add assertions.
+'beforeEach' is the hook for test and 'page & browser' are fixer which accessing UI.       
 
-Dillinger is a cloud-enabled, mobile-ready, offline-storage compatible,
-AngularJS-powered HTML5 Markdown editor.
+     
+const { chromium, test, expect, Page, Browser } = require('@playwright/test');
 
-- Type some Markdown on the left
-- See HTML in the right
-- ✨Magic ✨
+  test.beforeEach(async ({ page }) => {
+    await page.goto(process.env.url);
+    await page.locator('text= Clear').first().click();
+    await page.locator('#btn_start_assessment').click();
+  });
+                                                                   
+#### 5.1. Execute / Run Code
+Command	Description
+npx playwright test 	Run your tests, in the tests directory
+npx playwright test --headed 	Playwright Test just ran a test using Chromium browser, in a headless manner. Let's tell it to use headed browser:
+npx playwright test tests/todo-page.spec.ts 	Run a single test file
+npx playwright test tests/todo-page/ tests/landing-page/ 	Run a set of test files
+npx playwright test my-spec my-spec-2 	Run files that have my-spec or my-spec-2 in the file name
+npx playwright test -g "add a todo item" 	Run the test with the title
+npx playwright test --project=firefox 	Run tests in a particular configuration (project)
+npx playwright test --workers=1 	Disable parallelization
+npx playwright test --reporter=dot 	Choose a reporter
 
-## Features
+#### 5.2. Configuration file
+Playwright Test provides options to configure the default browser, context, and page fixtures. For example, there are options for headless, viewport, and ignoreHTTPSErrors. You can also record a video or a trace for the test or capture a screenshot at the end.
+Finally, there are plenty of testing options like timeout or testDir that configure how your tests are collected and executed.
+You can specify any options globally in the configuration file, and most of them locally in a test file.
+Please read the official documentation for more details.
+#### 5.3. Assertions
+Playwright Test uses expect library for test assertions. It extends it with the Playwright-specific matchers to achieve greater testing goals.
+expect(success).toBeTruthy(); 
+Playwright also extends it with convenience async matchers that will wait until the expected condition is met. Consider the following example:
+await expect(page.locator('.status')).toHaveText('Submitted'); 
+Playwright Test will be re-testing the node with the selector .status until fetched Node has the "Submitted" text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the testConfig.expect value in test config.
+By default, the timeout for assertions is set to 5 seconds. There are multiple assertions. Please see Test Assertions for more details.
+#### 5.4. Inspector
+Playwright Inspector is a GUI tool that helps to author and debug Playwright scripts. Using this feature you can execute your own code in debug mode when PWDEBUG=1 is set.
+$env:PWDEBUG=1
+npm run test
+Additional useful defaults are configured when PWDEBUG=1 is set:
+Browsers launch in the headed mode
+The default timeout is set to 0 (= no timeout)
 
-- Import a HTML file and watch it magically convert to Markdown
-- Drag and drop images (requires your Dropbox account be linked)
-- Import and save files from GitHub, Dropbox, Google Drive and One Drive
-- Drag and drop markdown and HTML files into Dillinger
-- Export documents as Markdown, HTML and PDF
+Also by clicking on the record button, we can record our activity and Playwright will generate code in the inspector window in the language we have selected. 
+Use open or codegen commands in the Playwright CLI:
+npx playwright codegen wikipedia.org
+At any moment, clicking the Record action enables codegen mode. Every action on the target page is turned into the generated script.
+#### 5.5. Using test hooks
+You can use test.beforeAll and test.afterAll hooks to set up and tear down resources shared between tests. And you can use test.beforeEach and test.afterEach hooks to set up and tear down resources for each test individually.
 
-Markdown is a lightweight markup language based on the formatting conventions
-that people naturally use in email.
-As [John Gruber] writes on the [Markdown site][df1]
+ test.afterAll(async ({ browser }) => {
+    await browser.close();
+  });
+#### 5.6. Reports
+Playwright Test comes with a few built-in reporters for different needs and the ability to provide custom reporters. The easiest way to try out built-in reporters is to pass the --reporter  command-line option.
+npx playwright test --reporter=line
+For more control, we can specify reporters programmatically in the configuration file.
+In the current project, I used HTML reports.
+HTML reporter produces a self-contained folder that contains the report for the test run that can be served as a web page.
+By default, the HTML report is opened automatically if some of the tests failed. You can control this behavior via the open property in the Playwright config. The possible values for that property are always, never, and on-failure (default).
+const config = {
+  reporter: [ ['html', { open: 'never' }] ],
+};
 
-> The overriding design goal for Markdown's
-> formatting syntax is to make it as readable
-> as possible. The idea is that a
-> Markdown-formatted document should be
-> publishable as-is, as plain text, without
-> looking like it's been marked up with tags
-> or formatting instructions.
+module.exports = config;
+By default, the report is written into the playwright-report folder in the current working directory. One can override that location using the PLAYWRIGHT_HTML_REPORT environment variable or a reporter configuration.
 
-This text you see here is *actually- written in Markdown! To get a feel
-for Markdown's syntax, type some text into the left window and
-watch the results in the right.
+In the configuration file, pass options directly:
+const config = {`
+  reporter: [ ['html', { outputFolder: 'my-report' }] ],
+};
 
-## Tech
+module.exports = config;
+A quick way of opening the last test run report is:
+npx playwright show-report
+Or if there is a custom folder name:
+npx playwright show-report my-report
 
-Dillinger uses a number of open source projects to work properly:
+#### 5.7. How to Run Playwright Tests Sequentially in Same Browser Context
 
-- [AngularJS] - HTML enhanced for web apps!
-- [Ace Editor] - awesome web-based text editor
-- [markdown-it] - Markdown parser done right. Fast and easy to extend.
-- [Twitter Bootstrap] - great UI boilerplate for modern web apps
-- [node.js] - evented I/O for the backend
-- [Express] - fast node.js network app framework [@tjholowaychuk]
-- [Gulp] - the streaming build system
-- [Breakdance](https://breakdance.github.io/breakdance/) - HTML
-to Markdown converter
-- [jQuery] - duh
+If you have worked with the Playwright framework you might have observed that if you write multiple tests inside the describe function, it gets executed one after another but each test runs in a separate browser context. That means that if you have performed a login in test1() it doesn't preserve those in test2(). The reason is that each time playwright executes the test, it creates a new context and executes the test. This feature also allows you to write independent tests and you can execute them parallelly with less execution time. Also its taking configuration from playwright.config file for browser context. For Ex: 
 
-And of course Dillinger itself is open source with a [public repository][dill]
- on GitHub.
+const { chromium, test, expect, Page, Browser } = require('@playwright/test');
 
-## Installation
+test.describe('test',async()=>{
+  test('Navigate to Google', async ({page}) => {
+    await page.goto('https://google.com/');
+    const url=await page.url();
+    expect(url).toContain('google');
+  });
 
-Dillinger requires [Node.js](https://nodejs.org/) v10+ to run.
+  test('Search for Playwright', async ({page}) => {
+    await page.type('input[name="q"]',"Playwright")
+    await page.keyboard.press('Enter');
+    let text=await page.innerText('//h3[contains(text(),"Playwright:")]')
+    expect(text).toContain('Playwright: Fast and reliable');
+  });
+});
 
-Install the dependencies and devDependencies and start the server.
+In the above code, Both of the tests run in a separate context since we are passing {page} as an argument to the test function. That's why above code wont work as we are assuming that it will navigate first and then we can search in second test. However for second case URL is not mentioned so that will fail.  
+If we are looking for a solution like scenarios inside the Playwright describe block, you should execute one after another in the browser. By preserving the previous state, we can modify your tests below.
 
-```sh
-cd dillinger
-npm i
-node app
-```
+const { chromium, test, expect, Page, Browser } = require('@playwright/test');
 
-For production environments...
+test.describe('test', async () => {
+  let page = Page;
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
+  });
 
-```sh
-npm install --production
-NODE_ENV=production node app
-```
+  test('Navigate to Google', async () => {
+    await page.goto('https://google.com/');
+    const url = await page.url();
+    expect(url).toContain('google');
+  });
 
-## Plugins
+  test('Search for Playwright', async () => {
+    await page.type('input[name="q"]', "Playwright")
+    await page.keyboard.press('Enter');
+    let text = await page.innerText('//h3[contains(text(),"Playwright:")]')
+    expect(text).toContain('Playwright: Fast and reliable');
+  });
+});
+If you look at the above code, the test() doesn't have {page} context passed as an argument here, so it takes from the page which we have initiated under the beforeAll(). With the above approach, your tests run just like any other framework code in the same browser context. Second test will be run as browserContext has URL already.
+Note : Page and Browser will get default config for ex : Video and Screenshot 'OFF', it wont follow playwright.config. We can override default config while declaring browser context but test evidences will be stored in different location so wont reflect in Test report. 
 
-Dillinger is currently extended with the following plugins.
-Instructions on how to use them in your own application are linked below.
+How to override browserContext config : Browser Context Setting 
 
-| Plugin | README |
-| ------ | ------ |
-| Dropbox | [plugins/dropbox/README.md][PlDb] |
-| GitHub | [plugins/github/README.md][PlGh] |
-| Google Drive | [plugins/googledrive/README.md][PlGd] |
-| OneDrive | [plugins/onedrive/README.md][PlOd] |
-| Medium | [plugins/medium/README.md][PlMe] |
-| Google Analytics | [plugins/googleanalytics/README.md][PlGa] |
+Environment Set Up:
+Few things needs to be done before executing the Test which are mentioned as below:
+•	Add the Environment Variables in PC >> Advance system settings >> System Properties >> Environment Variables 
+o	Click on 'New' button to add a User Variable
+o	Set the Variable as "secretSaltBbs" and Value as "TestBbs"
+o	Set the Variable as "url" and Value as "https://localhost:7216/" 
 
-## Development
+ 
+ 
 
-Want to contribute? Great!
-
-Dillinger uses Gulp + Webpack for fast developing.
-Make a change in your file and instantaneously see your updates!
-
-Open your favorite Terminal and run these commands.
-
-First Tab:
-
-```sh
-node app
-```
-
-Second Tab:
-
-```sh
-gulp watch
-```
-
-(optional) Third:
-
-```sh
-karma test
-```
-
-#### Building for source
-
-For production release:
-
-```sh
-gulp build --prod
-```
-
-Generating pre-built zip archives for distribution:
-
-```sh
-gulp build dist --prod
-```
-
-## Docker
-
-Dillinger is very easy to install and deploy in a Docker container.
-
-By default, the Docker will expose port 8080, so change this within the
-Dockerfile if necessary. When ready, simply use the Dockerfile to
-build the image.
-
-```sh
-cd dillinger
-docker build -t <youruser>/dillinger:${package.json.version} .
-```
-
-This will create the dillinger image and pull in the necessary dependencies.
-Be sure to swap out `${package.json.version}` with the actual
-version of Dillinger.
-
-Once done, run the Docker image and map the port to whatever you wish on
-your host. In this example, we simply map port 8000 of the host to
-port 8080 of the Docker (or whatever port was exposed in the Dockerfile):
-
-```sh
-docker run -d -p 8000:8080 --restart=always --cap-add=SYS_ADMIN --name=dillinger <youruser>/dillinger:${package.json.version}
-```
-
-> Note: `--capt-add=SYS-ADMIN` is required for PDF rendering.
-
-Verify the deployment by navigating to your server address in
-your preferred browser.
-
-```sh
-127.0.0.1:8000
-```
-
-## License
-
-MIT
-
-**Free Software, Hell Yeah!**
-
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
-
-   [dill]: <https://github.com/joemccann/dillinger>
-   [git-repo-url]: <https://github.com/joemccann/dillinger.git>
-   [john gruber]: <http://daringfireball.net>
-   [df1]: <http://daringfireball.net/projects/markdown/>
-   [markdown-it]: <https://github.com/markdown-it/markdown-it>
-   [Ace Editor]: <http://ace.ajax.org>
-   [node.js]: <http://nodejs.org>
-   [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>
-   [jQuery]: <http://jquery.com>
-   [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
-   [express]: <http://expressjs.com>
-   [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
-
-   [PlDb]: <https://github.com/joemccann/dillinger/tree/master/plugins/dropbox/README.md>
-   [PlGh]: <https://github.com/joemccann/dillinger/tree/master/plugins/github/README.md>
-   [PlGd]: <https://github.com/joemccann/dillinger/tree/master/plugins/googledrive/README.md>
-   [PlOd]: <https://github.com/joemccann/dillinger/tree/master/plugins/onedrive/README.md>
-   [PlMe]: <https://github.com/joemccann/dillinger/tree/master/plugins/medium/README.md>
-   [PlGa]: <https://github.com/RahulHP/dillinger/blob/master/plugins/googleanalytics/README.md>
