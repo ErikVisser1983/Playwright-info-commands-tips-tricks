@@ -77,76 +77,58 @@ Twee voorbeelden:
 
 Bij default staat de timeout for assertions ingesteld op 5 seconden. 
 #### 5.4. Inspector
-Playwright Inspector is a GUI tool that helps to author and debug Playwright scripts. Using this feature you can execute your own code in debug mode when PWDEBUG=1 is set.
-$env:PWDEBUG=1
-npm run test
-Additional useful defaults are configured when PWDEBUG=1 is set:
-Browsers launch in the headed mode
-The default timeout is set to 0 (= no timeout)
+Playwright Inspector - https://playwright.dev/docs/debug#playwright-inspector is een GUI tool dat helpt om test script te debuggen en te schrijven.
 
-Also by clicking on the record button, we can record our activity and Playwright will generate code in the inspector window in the language we have selected. 
-Use open or codegen commands in the Playwright CLI:
-npx playwright codegen wikipedia.org
-At any moment, clicking the Record action enables codegen mode. Every action on the target page is turned into the generated script.
-#### 5.5. Using test hooks
-You can use test.beforeAll and test.afterAll hooks to set up and tear down resources shared between tests. And you can use test.beforeEach and test.afterEach hooks to set up and tear down resources for each test individually.
+Er is ook een mogelijkheid om een recording te maken -https://playwright.dev/docs/codegen-intro#running-codegen 
+Door de kliken de record knop kunnen je activiteiten opgenomen worden en zal Playwright code genereren in de taal die we geselecteerd hebben.
+#### 5.5. Gebruik van test hooks
+Je kan gebruik maken van verschillende zoals zij het noemen, "test hooks". 
+B.v. een test.afterAll  wordt uitgevoerd nadat alle andere test gedraaid hebben:
+test.afterAll(async () => {
+  console.log('Done with tests');
+  // ...
+});
+En zo zijn er meer zoals test.beforeAll, test.beforeEach, test.afterEach en meer om mee te spelen
 
- test.afterAll(async ({ browser }) => {
-    await browser.close();
-  });
+https://playwright.dev/docs/api/class-test#test-before-all
+
 #### 5.6. Reports
-Playwright Test comes with a few built-in reporters for different needs and the ability to provide custom reporters. The easiest way to try out built-in reporters is to pass the --reporter  command-line option.
-npx playwright test --reporter=line
-For more control, we can specify reporters programmatically in the configuration file.
-In the current project, I used HTML reports.
-HTML reporter produces a self-contained folder that contains the report for the test run that can be served as a web page.
-By default, the HTML report is opened automatically if some of the tests failed. You can control this behavior via the open property in the Playwright config. The possible values for that property are always, never, and on-failure (default).
-const config = {
-  reporter: [ ['html', { open: 'never' }] ],
-};
+Playwright komt met een paar built-in reporters - https://playwright.dev/docs/test-reporters 
 
-module.exports = config;
-By default, the report is written into the playwright-report folder in the current working directory. One can override that location using the PLAYWRIGHT_HTML_REPORT environment variable or a reporter configuration.
+#### 5.7. Hoe run je Playwright Tests sequenteel in dezelfde browser
+Elke keer als Playwright een test uitvoert dan doet hij dit in een nieuwe Browser. Dus als je in de eerste test een login uitvoert dan gaat hij niet in deze Browser met die resultaten verder in het test proces. 
+Het voordeel kan zijn dat je zelfstandige tests kan schrijven die je paralell kan uitvoeren met minder executie tijd.
 
-In the configuration file, pass options directly:
-const config = {`
-  reporter: [ ['html', { outputFolder: 'my-report' }] ],
-};
+Een oplossing om ervoor te zorgen dat de tests in dezelfde browser gedraaid worden zou volgens deze site - https://dzone.com/articles/execute-playwright-test-sequentially-same-browser-context op de volgende manier gedaan kunnen worden.
 
-module.exports = config;
-A quick way of opening the last test run report is:
-npx playwright show-report
-Or if there is a custom folder name:
-npx playwright show-report my-report
-
-#### 5.7. How to Run Playwright Tests Sequentially in Same Browser Context
-
-If you have worked with the Playwright framework you might have observed that if you write multiple tests inside the describe function, it gets executed one after another but each test runs in a separate browser context. That means that if you have performed a login in test1() it doesn't preserve those in test2(). The reason is that each time playwright executes the test, it creates a new context and executes the test. This feature also allows you to write independent tests and you can execute them parallelly with less execution time. Also its taking configuration from playwright.config file for browser context. For Ex: 
-
-const { chromium, test, expect, Page, Browser } = require('@playwright/test');
-
-test.describe('test',async()=>{
-  test('Navigate to Google', async ({page}) => {
+##### 1. Define the Page Instance in `beforeAll()`
+```//inside your describe block  
+let page:Page; //create variable with page
+  test.beforeAll(async ({browser}) =>{
+    page = await browser.newPage(); //Create a new Page instance
+  }); 
+ ```
+  
+##### 2. Do Not Pass the Page as a Parameter to Your Tests
+```//inside describe block, after beforeAll()  
+test('Navigate to Google', async () => {
     await page.goto('https://google.com/');
     const url=await page.url();
     expect(url).toContain('google');
   });
-
-  test('Search for Playwright', async ({page}) => {
+  
+  test('Search for Playwright', async () => {
     await page.type('input[name="q"]',"Playwright")
     await page.keyboard.press('Enter');
     let text=await page.innerText('//h3[contains(text(),"Playwright:")]')
     expect(text).toContain('Playwright: Fast and reliable');
   });
-});
-
-In the above code, Both of the tests run in a separate context since we are passing {page} as an argument to the test function. That's why above code wont work as we are assuming that it will navigate first and then we can search in second test. However for second case URL is not mentioned so that will fail.  
-If we are looking for a solution like scenarios inside the Playwright describe block, you should execute one after another in the browser. By preserving the previous state, we can modify your tests below.
-
-const { chromium, test, expect, Page, Browser } = require('@playwright/test');
+```
+##### 3. Alles samenvoegend
+```import { test, expect, Page } from '@playwright/test';
 
 test.describe('test', async () => {
-  let page = Page;
+  let page: Page;
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
   });
@@ -164,18 +146,6 @@ test.describe('test', async () => {
     expect(text).toContain('Playwright: Fast and reliable');
   });
 });
-If you look at the above code, the test() doesn't have {page} context passed as an argument here, so it takes from the page which we have initiated under the beforeAll(). With the above approach, your tests run just like any other framework code in the same browser context. Second test will be run as browserContext has URL already.
-Note : Page and Browser will get default config for ex : Video and Screenshot 'OFF', it wont follow playwright.config. We can override default config while declaring browser context but test evidences will be stored in different location so wont reflect in Test report. 
-
-How to override browserContext config : Browser Context Setting 
-
-Environment Set Up:
-Few things needs to be done before executing the Test which are mentioned as below:
-•	Add the Environment Variables in PC >> Advance system settings >> System Properties >> Environment Variables 
-o	Click on 'New' button to add a User Variable
-o	Set the Variable as "secretSaltBbs" and Value as "TestBbs"
-o	Set the Variable as "url" and Value as "https://localhost:7216/" 
-
- 
+ ```
  
 
